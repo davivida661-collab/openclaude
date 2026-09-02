@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Open Claude is currently maintained on the latest `main` branch and the latest
+OpenClaude is currently maintained on the latest `main` branch and the latest
 npm release only.
 
 | Version | Supported |
@@ -16,7 +16,7 @@ landed directly on `main` before a package release is published.
 
 ## Reporting a Vulnerability
 
-If you believe you have found a security vulnerability in Open Claude, please
+If you believe you have found a security vulnerability in OpenClaude, please
 report it privately.
 
 Preferred reporting channel:
@@ -58,7 +58,7 @@ report.
 
 This policy applies to:
 
-- the Open Claude source code in this repository
+- the OpenClaude source code in this repository
 - official release artifacts published from this repository
 - the `@gitlawb/openclaude` npm package
 
@@ -67,3 +67,41 @@ This policy does not cover:
 - third-party model providers, endpoints, or hosted services
 - local misconfiguration on the reporter's machine
 - vulnerabilities in unofficial forks, mirrors, or downstream repackages
+
+## Security Considerations for Android/Termux Users
+
+Users running OpenClaude in a Termux + proot environment should be aware of
+additional security considerations:
+
+### API Key Storage
+
+- Store API keys in a dedicated file with restricted permissions (`chmod 600`),
+  not in shell profiles like `~/.bashrc` where other processes can read them.
+- Never commit API keys to a Git repository, even in private repos.
+- Rotate keys periodically, especially if you suspect they may have been
+  exposed.
+
+### proot Isolation Limitations
+
+- proot provides **filesystem isolation only**, not full container isolation.
+  Processes share the Android kernel with all other apps on the device.
+- Do not treat the proot environment as a security boundary for protecting
+  sensitive data or API keys beyond basic filesystem access control.
+- Be aware that proot processes can see the Termux home directory
+  (`/data/data/com.termux/files/home/`). Sensitive files outside the proot
+  root may be accessible.
+
+### Network Security
+
+- All official OpenClaude providers use HTTPS. If you configure a custom
+  endpoint, ensure it uses HTTPS to protect your API key in transit.
+- Be cautious with proxy configurations that may downgrade HTTPS to HTTP.
+
+### Keeping Updated
+
+- Regularly update OpenClaude (`git pull && bun run build`) to receive
+  security patches.
+- Keep Termux and its packages updated (`pkg update && pkg upgrade`) to
+  ensure you have the latest security fixes for the runtime environment.
+- Update Bun regularly inside proot to benefit from upstream security
+  improvements.
