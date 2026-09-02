@@ -66,7 +66,7 @@ bun --version  # should show 1.3.13+
 
 ```bash
 cd /data/data/com.termux/files/home
-git clone https://github.com/Gitlawb/openclaude.git
+git clone https://github.com/davivida661-collab/openclaude.git
 cd openclaude
 bun install
 bun run build

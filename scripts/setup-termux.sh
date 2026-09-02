@@ -3,7 +3,7 @@
 # OpenClaude — Automated Termux + proot Ubuntu Setup Script
 #
 # Run this from Termux (not proot) to install everything automatically:
-#   curl -fsSL https://raw.githubusercontent.com/Gitlawb/openclaude/main/scripts/setup-termux.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/davivida661-collab/openclaude/main/scripts/setup-termux.sh | bash
 #
 # Or save it locally and run:
 #   bash setup-termux.sh
@@ -96,7 +96,7 @@ if [ -d "$REPO_DIR/.git" ]; then
 else
     echo "[proot] Cloning OpenClaude..."
     cd /data/data/com.termux/files/home
-    git clone https://github.com/Gitlawb/openclaude.git
+    git clone https://github.com/davivida661-collab/openclaude.git
     cd openclaude
 fi
 
