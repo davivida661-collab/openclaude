@@ -17,6 +17,7 @@ export const docsNav: DocsNavGroup[] = [
     items: [
       { title: 'Overview', href: '/docs/' },
       { title: 'Installation', href: '/docs/installation/' },
+      { title: 'Android / Termux', href: 'https://github.com/Gitlawb/openclaude/blob/main/ANDROID_INSTALL.md', newTab: true },
       { title: 'Quickstart', href: '/docs/quickstart/' },
       { title: 'Providers', href: '/docs/providers/' },
     ],
