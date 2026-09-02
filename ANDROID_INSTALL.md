@@ -197,6 +197,214 @@ sed -i 's/OPENAI_MODEL=.*/OPENAI_MODEL=qwen\/qwen3-coder:free/' ~/.config/opencl
 
 ---
 
+## GitHub Integration
+
+### Setting Up GitHub Models / Copilot as a Provider
+
+OpenClaude supports GitHub Models and GitHub Copilot as a provider. This is
+useful if you have a GitHub account with Copilot access.
+
+**Option A: Interactive onboarding (recommended)**
+
+Inside OpenClaude, run:
+```
+/onboard-github
+```
+This walks you through GitHub authentication interactively and saves your
+credentials securely.
+
+**Option B: Manual token setup**
+
+1. Create a GitHub Personal Access Token (PAT) at
+   [github.com/settings/tokens](https://github.com/settings/tokens)
+   - Required scopes: `read:user`, `repo` (for private repos),
+     `copilot` (for Copilot access)
+   - For fine-grained tokens, grant access to the models you need
+
+2. Store it securely inside proot:
+```bash
+# Inside proot Ubuntu
+cat > ~/.config/openclaude/github.env << 'EOF'
+export CLAUDE_CODE_USE_GITHUB=1
+export GITHUB_TOKEN=ghp_your_token_here
+EOF
+chmod 600 ~/.config/openclaude/github.env
+```
+
+3. Source it in your `.bashrc`:
+```bash
+echo 'source ~/.config/openclaude/github.env' >> ~/.bashrc
+source ~/.bashrc
+```
+
+> ⚠️ **Never commit your GitHub token.** The `.env.example` has placeholder
+> values only. Store real tokens in `~/.config/openclaude/` with `chmod 600`.
+
+### Installing the GitHub CLI (`gh`) on Termux
+
+The GitHub CLI lets you manage repos, PRs, and issues from the terminal.
+
+**Inside proot Ubuntu:**
+```bash
+# Add GitHub CLI repository
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+  | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+  | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+
+apt update && apt install -y gh
+```
+
+**Authenticate:**
+```bash
+gh auth login
+# Select: GitHub.com → HTTPS → Paste an authentication token
+# Paste your PAT from github.com/settings/tokens
+```
+
+**Verify:**
+```bash
+gh auth status
+gh repo list --limit 5
+```
+
+### Configuring Git for Commits
+
+Set up your Git identity inside proot for proper commit attribution:
+```bash
+# Inside proot Ubuntu
+git config --global user.name "Your Name"
+git config --global user.email "your-email@example.com"
+
+# Recommended: use main as default branch
+git config --global init.defaultBranch main
+
+# Enable colored output
+git config --global color.ui auto
+
+# Sign commits with GPG (optional but recommended)
+git config --global commit.gpgsign true
+# See SSH key section below for SSH signing setup
+```
+
+### SSH Keys for GitHub (Optional)
+
+If you prefer SSH over HTTPS for Git operations:
+
+```bash
+# Inside proot Ubuntu
+ssh-keygen -t ed25519 -C "your-email@example.com" -f ~/.ssh/id_ed25519 -N ""
+
+# Copy the public key
+cat ~/.ssh/id_ed25519.pub
+# Copy the output and add it at: https://github.com/settings/keys
+
+# Configure SSH to use the key for GitHub
+cat >> ~/.ssh/config << 'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519
+  StrictHostKeyChecking accept-new
+EOF
+
+chmod 600 ~/.ssh/config
+chmod 700 ~/.ssh
+
+# Test the connection
+ssh -T git@github.com
+```
+
+Then clone using SSH:
+```bash
+git clone git@github.com:Gitlawb/openclaude.git
+```
+
+### Forking and Contributing from Termux
+
+To contribute changes back to OpenClaude:
+
+1. **Fork the repo** on GitHub (click Fork on the repo page)
+
+2. **Add your fork as remote:**
+```bash
+cd /data/data/com.termux/files/home/openclaude
+git remote add fork https://github.com/YOUR_USERNAME/openclaude.git
+# Or for SSH: git remote add fork git@github.com:YOUR_USERNAME/openclaude.git
+
+# Verify remotes
+git remote -v
+```
+
+3. **Create a feature branch:**
+```bash
+git checkout -b my-feature
+```
+
+4. **Make changes, commit, and push:**
+```bash
+# Make your changes...
+git add -A
+git commit -m "feat: describe your change"
+git push fork my-feature
+```
+
+5. **Create a Pull Request:**
+```bash
+# Using gh CLI (if installed)
+gh pr create --title "feat: describe your change" \
+  --body "What this PR does and why" \
+  --base main
+
+# Or open the browser URL printed by gh
+```
+
+6. **Sync with upstream:**
+```bash
+# Add upstream if not already added
+git remote add upstream https://github.com/Gitlawb/openclaude.git
+
+# Fetch and merge latest changes
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push fork main
+```
+
+### OpenClaude GitHub Features
+
+OpenClaude has built-in GitHub integration that works from Termux:
+
+- **`/onboard-github`** — Interactive GitHub Models/Copilot setup wizard
+- **`/install-github-app`** — Install the OpenClaude GitHub App for
+  repository-level integration (CI/CD, automated code review)
+- **`/commit`** — AI-generated commit messages with proper formatting
+- **`/branch`** — Create and switch branches
+- **`/diff`** — View and explain code changes
+- **`/review`** — AI-powered code review of PRs
+- **`/pr_comments`** — View and respond to PR review comments
+
+### Securing GitHub Tokens on Termux
+
+1. **Use fine-grained PATs** when possible — they limit scope to specific
+   repos and permissions
+2. **Set short expiration** (30–90 days) and rotate regularly
+3. **Never store tokens in shell history:**
+   ```bash
+   # Disable history for sensitive commands
+   HISTIGNORE="export GITHUB_TOKEN=*"
+   ```
+4. **Store tokens in files with restricted permissions:**
+   ```bash
+   chmod 600 ~/.config/openclaude/github.env
+   chmod 700 ~/.config/openclaude/
+   ```
+5. **Use `gh auth login`** instead of manual tokens when possible — the
+   GitHub CLI stores credentials in its own secure store
+
+---
+
 ## Updating OpenClaude
 
 When you pull updates to the repository:
@@ -461,3 +669,29 @@ gracefully to line art.
 **Q: How do I update OpenClaude?**
 A: Run `git pull` then `bun run build` inside the proot Ubuntu environment.
 See the Updating section above.
+
+**Q: Can I use GitHub Models / Copilot on Termux?**
+A: Yes. Set `CLAUDE_CODE_USE_GITHUB=1` and `GITHUB_TOKEN` in your provider
+env file, or run `/onboard-github` inside OpenClaude for guided setup. See
+the GitHub Integration section.
+
+**Q: How do I contribute code back to OpenClaude from Termux?**
+A: Fork the repo on GitHub, add your fork as a remote, create a feature
+branch, make changes, push to your fork, and open a PR with `gh pr create`.
+See the Forking and Contributing section for step-by-step instructions.
+
+**Q: Can I use SSH instead of HTTPS for Git?**
+A: Yes. Generate an SSH key with `ssh-keygen -t ed25519`, add the public key
+to your GitHub account, and clone with `git@github.com:user/repo.git`. See
+the SSH Keys section.
+
+**Q: How do I report bugs or request features?**
+A: Open an issue at [github.com/Gitlawb/openclaude/issues](https://github.com/Gitlawb/openclaude/issues).
+Include your Termux version (`termux-info`), proot Ubuntu version, Node.js
+version, and the exact error message. Use `gh issue create` if you installed
+the GitHub CLI.
+
+**Q: Can I use OpenClaude with my private repos on Termux?**
+A: Yes. Clone with HTTPS and authenticate with a PAT that has `repo` scope,
+or use SSH keys. OpenClaude's tools (Read, Write, Edit, Bash, Grep, Glob)
+work on any directory you have access to.
