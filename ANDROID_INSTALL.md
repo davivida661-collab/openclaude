@@ -22,6 +22,90 @@ OpenClaude requires [Bun](https://bun.sh) ≥ 1.3.13 to build, and Bun does not
 support Android natively. The workaround is running a real Ubuntu environment
 inside Termux via `proot-distro`, where Bun's Linux binary works correctly.
 
+> **32-bit phone?** Bun is **64-bit only** — it will not install on 32-bit
+> (armv7) devices. You can still run OpenClaude: skip the build entirely and
+> use the prebuilt bundle with plain Node.js. See
+> [32-Bit Devices (armv7)](#32-bit-devices-armv7).
+
+---
+
+## 32-Bit Devices (armv7)
+
+If your phone reports a 32-bit CPU, Bun cannot be installed on it — and without
+Bun the normal build steps fail. Good news: **you don't need Bun at all.**
+
+### Why this works
+
+- OpenClaude's compiled output (`dist/cli.mjs`) is **pure JavaScript**. It has
+  no "32-bit" or "64-bit" version — the same file runs on any architecture
+  that has Node.js.
+- Only **Bun** (the build tool) is 64-bit-only. The bundle is built once on a
+  64-bit machine (GitHub Actions) and you download the ready-made result.
+- Node.js 22 LTS still ships 32-bit ARM (`armv7l`) binaries, so the runtime
+  works on older phones.
+
+### Check your architecture
+
+```bash
+uname -m
+```
+
+| Output | Meaning |
+|---|---|
+| `aarch64` | 64-bit — follow the normal Installation steps above |
+| `armv7l` or `armv8l` | 32-bit — follow the steps below |
+
+### Install on a 32-bit device
+
+```bash
+# 1. Enter proot Ubuntu
+proot-distro login ubuntu
+
+# 2. Install system tools (git and ripgrep are used by OpenClaude)
+apt update && apt install -y curl xz-utils git ripgrep
+
+# 3. Install Node.js 22 LTS for 32-bit ARM (official binaries)
+cd ~
+curl -fsSL https://nodejs.org/dist/v22.11.0/node-v22.11.0-linux-armv7l.tar.xz -o node.tar.xz
+tar -xf node.tar.xz
+export PATH="$HOME/node-v22.11.0-linux-armv7l/bin:$PATH"
+node --version   # should print v22.11.0
+
+# 4. Clone OpenClaude (for config and tooling; the compiled bundle comes next)
+cd /data/data/com.termux/files/home
+git clone https://github.com/davivida661-collab/openclaude.git
+cd openclaude
+
+# 5. Download the prebuilt bundle (built on a 64-bit machine via GitHub Actions)
+mkdir -p dist
+curl -fsSL -o dist/cli.mjs \
+  https://github.com/davivida661-collab/openclaude/releases/latest/download/cli.mjs
+
+# 6. Verify and run
+node dist/cli.mjs --version
+node dist/cli.mjs
+```
+
+If no release exists yet, open **Actions → “Build prebuilt bundle” → Run
+workflow** (or push any commit to `main`) and download the
+`openclaude-prebuilt` artifact instead.
+
+### Notes for 32-bit
+
+- **No `npm install` / `bun install` needed** — everything the CLI needs is
+  already inside the bundle. Git and ripgrep come from `apt`.
+- **Image inputs are optional**: image processing uses `sharp`, which is
+  loaded lazily. Without it, text coding sessions work normally.
+- 32-bit devices have limited RAM — see [Performance Tips](#performance-tips).
+- To update later, just re-download `cli.mjs`:
+
+  ```bash
+  cd /data/data/com.termux/files/home/openclaude
+  curl -fsSL -o dist/cli.mjs \
+    https://github.com/davivida661-collab/openclaude/releases/latest/download/cli.mjs
+  node dist/cli.mjs
+  ```
+
 ---
 
 ## Installation

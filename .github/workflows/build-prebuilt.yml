@@ -1,0 +1,58 @@
+name: Build prebuilt bundle
+
+# Builds dist/cli.mjs on a 64-bit runner and publishes it so devices that
+# cannot run Bun (e.g. 32-bit ARM / armv7 Android in Termux) can download a
+# ready-to-run bundle and execute it with plain Node.js. The bundle is pure
+# JavaScript — architecture-neutral — only the Bun build tool is 64-bit only.
+#
+# The uploaded artifact is available under Actions → “Build prebuilt bundle”.
+# Tag pushes (v*) additionally publish the bundle as a GitHub Release at:
+#   https://github.com/<owner>/<repo>/releases/latest/download/cli.mjs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build bundle
+        run: bun run build
+
+      - name: Verify the bundle runs on plain Node
+        run: node dist/cli.mjs --version
+
+      - name: Upload prebuilt bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaude-prebuilt
+          path: dist/
+          retention-days: 30
+
+      - name: Publish GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/cli.mjs dist/sdk.mjs \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "OpenClaude ${GITHUB_REF_NAME}" \
+            --notes "Prebuilt OpenClaude bundle for any architecture — download cli.mjs and run it with Node.js >= 22."
