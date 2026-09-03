@@ -211,6 +211,31 @@ to switch providers at any time.
 
 ---
 
+## Option B — OpenClaude Lite (Python, no proot)
+
+If you want a **lighter assistant that runs in plain Termux** — no proot
+Ubuntu, no Bun, no Node — use **OpenClaude Lite**, the pure-Python companion
+tool in [`python/`](python/). It works on **any architecture, including
+32-bit (armv7)** devices, because Python runs natively in Termux.
+
+```bash
+pkg install python
+curl -fsSL -o openclaude_lite.py \
+  https://raw.githubusercontent.com/davivida661-collab/openclaude/main/python/openclaude_lite.py
+python3 openclaude_lite.py --setup   # prints how to add your free API key
+python3 openclaude_lite.py           # start chatting
+```
+
+It supports OpenRouter (free models), GitHub Models, DeepSeek, Gemini, OpenAI
+and local Ollama, with file read/write tools and safe (approval-gated) shell
+commands. Full documentation in [`python/README.md`](python/README.md).
+
+The full TypeScript OpenClaude above and Lite can coexist — use the heavy CLI
+when you want the complete experience, and Lite when you just need a fast
+coding assistant on a small or 32-bit phone.
+
+---
+
 ## Creating a Launch Script
 
 Create a convenience script to avoid typing the full path every time:
